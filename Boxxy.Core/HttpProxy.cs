@@ -22,7 +22,7 @@ namespace Boxxy.Core
         public IList<IncomingHttpRequest> IncomingRequests { get; private set; }
 
         public HttpProxy(string prefixUrl, string destination)
-        {                        
+        {
             IncomingRequests = new List<IncomingHttpRequest>();
             _destination = destination;
             _listener = new HttpListener();
@@ -38,67 +38,24 @@ namespace Boxxy.Core
             _currentTcs = new CancellationTokenSource();
 
             // Not really sure why this type isn't inferred properly.
-            Task.Run((Action) ListenerLoop, _currentTcs.Token);
+            Task.Run((Action)ListenerLoop, _currentTcs.Token);
         }
 
         private void ListenerLoop()
         {
             while (true)
             {
-                var context = _listener.GetContext();                
+                // TODO - handle manual stop from UI, which raises an exception if waiting on GetContext()
+                var context = _listener.GetContext();
                 HandleRequest(context).Wait();
             }
         }
-
-        public class IncomingHttpRequest
-        {
-            public Dictionary<string, IList<string>> Headers { get; set; }
-            public HttpListenerResponse Response { get; private set; }
-            public Uri Uri { get; set; }
-            public string HttpMethod { get; set; }
-            public string Body { get; set; }
-
-            // TODO - remove me later
-            public HttpListenerRequest Request { get; set; }
-
-            public IncomingHttpRequest(HttpListenerContext context)
-            {
-                Headers = new Dictionary<string, IList<string>>();
-                Request = context.Request;
-                var request = context.Request;
-                Response = context.Response;
-
-                Body = new StreamReader(request.InputStream).ReadToEnd();
-                Uri = request.Url;
-                HttpMethod = request.HttpMethod;
-
-                foreach (var headerKey in request.Headers.AllKeys)
-                {
-                    Headers.Add(headerKey, request.Headers.GetValues(headerKey));
-                }
-            }
-
-            public async Task RespondWith(HttpResponseMessage serverResponse)
-            {
-                //var buffer = Encoding.UTF8.GetBytes("{\"x\": 1}");
-
-                var buffer = await serverResponse.Content.ReadAsByteArrayAsync();
-
-                Response.ContentLength64 = buffer.Length;
-                Response.ContentEncoding = Encoding.UTF8;
-
-                var output = Response.OutputStream;
-                output.Write(buffer, 0, buffer.Length);
-                output.Close();
-
-            }
-        }
-
 
         private async Task HandleRequest(HttpListenerContext context)
         {
             var incomingRequest = new IncomingHttpRequest(context);
             IncomingRequests.Add(incomingRequest);
+            OnRequest(incomingRequest);
 
             var serverResponse = await Forward(incomingRequest);
             await Respond(incomingRequest, serverResponse);
@@ -195,6 +152,16 @@ namespace Boxxy.Core
                     loop = false;
                 };
             });
+        }
+
+        public event Action<IncomingHttpRequest> Request;
+
+        protected virtual void OnRequest(IncomingHttpRequest obj)
+        {
+            if (Request != null)
+            {
+                Request.Invoke(obj);
+            }
         }
     }
 }
