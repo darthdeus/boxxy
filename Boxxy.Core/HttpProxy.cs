@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace Boxxy.Core
 {
@@ -21,8 +22,7 @@ namespace Boxxy.Core
         private CancellationTokenSource _currentTcs;
         public IList<IncomingHttpRequest> IncomingRequests { get; private set; }
 
-        public HttpProxy(string prefixUrl, string destination)
-        {
+        public HttpProxy(string prefixUrl, string destination) {
             IncomingRequests = new List<IncomingHttpRequest>();
             _destination = destination;
             _listener = new HttpListener();
@@ -30,51 +30,58 @@ namespace Boxxy.Core
             IsRunning = false;
         }
 
-        public void Start()
-        {
+        public void Start() {
             _listener.Start();
             IsRunning = true;
 
             _currentTcs = new CancellationTokenSource();
 
             // Not really sure why this type isn't inferred properly.
-            Task.Run((Action)ListenerLoop, _currentTcs.Token);
+            Task.Run((Action) ListenerLoop, _currentTcs.Token);
         }
 
-        private void ListenerLoop()
-        {
-            while (true)
-            {
+        private void ListenerLoop() {
+            while (true) {
                 // TODO - handle manual stop from UI, which raises an exception if waiting on GetContext()
                 var context = _listener.GetContext();
                 HandleRequest(context).Wait();
             }
         }
 
-        private async Task HandleRequest(HttpListenerContext context)
-        {
+        private async Task HandleRequest(HttpListenerContext context) {
             var incomingRequest = new IncomingHttpRequest(context);
             IncomingRequests.Add(incomingRequest);
             OnRequest(incomingRequest);
 
             var serverResponse = await Forward(incomingRequest);
+
+            //incomingRequest.Request = null;
+            //incomingRequest.Response = null;
+            //var str = JsonConvert.SerializeObject(incomingRequest);
+            //Console.WriteLine(str);
+
+            //using (var writer = new StreamWriter("neco.json")) {
+            //    writer.Write(str);
+            //}
+
+            //var hh = JsonConvert.DeserializeObject<IncomingHttpRequest>(str);
+            //Console.WriteLine(hh);
+
             await Respond(incomingRequest, serverResponse);
         }
 
-        private async Task<HttpResponseMessage> Forward(IncomingHttpRequest incomingRequest)
-        {
+        private async Task<HttpResponseMessage> Forward(IncomingHttpRequest incomingRequest) {
             HttpResponseMessage response;
-            using (var client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) })
-            {
+            using (var client = new HttpClient {Timeout = TimeSpan.FromSeconds(10)}) {
                 var request = incomingRequest.Request;
 
                 var requestMethod = ParseHttpMethod(request.HttpMethod);
                 var message = new HttpRequestMessage(requestMethod, _destination);
 
-                Console.WriteLine(new HttpRequestSerializer().ToString(request));
+                // TODO - fix me
+                //Console.WriteLine(new HttpRequestSerializer().ToString(request));
 
-                foreach (var header in request.Headers.AllKeys)
-                {
+                foreach (var header in request.Headers.AllKeys) {
                     var values = request.Headers.GetValues(header);
                     message.Headers.Add(header, values);
                 }
@@ -82,8 +89,7 @@ namespace Boxxy.Core
                 message.Headers.Add("herp", "trolol");
                 message.Headers.Host = new Uri(_destination).Host;
 
-                if (requestMethod != HttpMethod.Get)
-                {
+                if (requestMethod != HttpMethod.Get) {
                     var originalRequestContent = new StreamReader(request.InputStream).ReadToEnd();
                     message.Content = new ByteArrayContent(Encoding.UTF8.GetBytes(originalRequestContent));
                 }
@@ -93,20 +99,17 @@ namespace Boxxy.Core
             }
 
             var destinationResponseString = await response.Content.ReadAsStringAsync();
-            Console.WriteLine("got reply: {0}", destinationResponseString);
+            //Console.WriteLine("got reply: {0}", destinationResponseString);
 
             return response;
         }
 
-        private async Task Respond(IncomingHttpRequest incomingRequest, HttpResponseMessage serverResponse)
-        {
+        private async Task Respond(IncomingHttpRequest incomingRequest, HttpResponseMessage serverResponse) {
             await incomingRequest.RespondWith(serverResponse);
         }
 
-        private HttpMethod ParseHttpMethod(string httpMethod)
-        {
-            switch (httpMethod.ToUpper())
-            {
+        private HttpMethod ParseHttpMethod(string httpMethod) {
+            switch (httpMethod.ToUpper()) {
                 case "GET":
                     return HttpMethod.Get;
                 case "POST":
@@ -125,41 +128,35 @@ namespace Boxxy.Core
             }
         }
 
-        public void Stop()
-        {
+        public void Stop() {
             _listener.Stop();
         }
 
-        private IObservable<HttpListenerContext> Requests()
-        {
-            return Observable.Create((IObserver<HttpListenerContext> observer) =>
-            {
-                var loop = true;
+        private IObservable<HttpListenerContext> Requests() {
+            return Observable.Create(
+                (IObserver<HttpListenerContext> observer) => {
+                    var loop = true;
 
-                Task.Run(() =>
-                {
-                    while (loop)
-                    {
-                        var context = _listener.GetContext();
-                        observer.OnNext(context);
-                    }
+                    Task.Run(
+                        () => {
+                            while (loop) {
+                                var context = _listener.GetContext();
+                                observer.OnNext(context);
+                            }
+                        });
+
+                    return () => {
+                        // TODO - replace this with proper logging
+                        Console.WriteLine("HttpProxy._listener stopped due to Rx stream being closed.");
+                        loop = false;
+                    };
                 });
-
-                return () =>
-                {
-                    // TODO - replace this with proper logging
-                    Console.WriteLine("HttpProxy._listener stopped due to Rx stream being closed.");
-                    loop = false;
-                };
-            });
         }
 
         public event Action<IncomingHttpRequest> Request;
 
-        protected virtual void OnRequest(IncomingHttpRequest obj)
-        {
-            if (Request != null)
-            {
+        protected virtual void OnRequest(IncomingHttpRequest obj) {
+            if (Request != null) {
                 Request.Invoke(obj);
             }
         }

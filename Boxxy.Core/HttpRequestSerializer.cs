@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Boxxy.Core
 {
-    internal class HttpRequestSerializer
+    public class HttpRequestSerializer
     {
         public string ToString(HttpListenerRequest request) {
             NameValueCollection headers = request.Headers;

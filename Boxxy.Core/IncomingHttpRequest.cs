@@ -13,8 +13,7 @@ namespace Boxxy.Core
         public string Name { get; set; }
         public string Value { get; set; }
 
-        public Header(string name, string value)
-        {
+        public Header(string name, string value) {
             Name = name;
             Value = value;
         }
@@ -23,13 +22,16 @@ namespace Boxxy.Core
     public class IncomingHttpRequest
     {
         public IList<Header> Headers { get; set; }
-        public HttpListenerResponse Response { get; private set; }
+        public HttpListenerResponse Response { get; set; }
         public Uri Uri { get; set; }
         public string HttpMethod { get; set; }
         public string Body { get; set; }
 
         // TODO - remove me later
         public HttpListenerRequest Request { get; set; }
+
+        public IncomingHttpRequest() {
+        }
 
         public IncomingHttpRequest(HttpListenerContext context) {
             Headers = new List<Header>();
