@@ -15,11 +15,13 @@ namespace Boxxy
 {
     class Program
     {
-        static void Main(string[] args)
-        {
-            var proxy = new HttpProxy("http://localhost:8080/", "http://requestb.in/pa43a9pa");
-            proxy.Start();
-            Console.ReadLine();
+        static void Main(string[] args) {
+            var result = Parser.String("c hel").Run("c hello");
+            Console.WriteLine(result);
+
+            //var proxy = new HttpProxy("http://localhost:8080/", "http://requestb.in/pa43a9pa");
+            //proxy.Start();
+            //Console.ReadLine();
         }
     }
 

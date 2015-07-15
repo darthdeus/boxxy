@@ -25,12 +25,11 @@ namespace Boxxy.Core
             return String.Format("{0}\n{1}", serializedHeaders, serializedBody);
         }
 
+        //public IncomingHttpRequest FromString(string input) {
+        //    var request = new IncomingHttpRequest();
 
-        public IncomingHttpRequest FromString(string input) {
-            var request = new IncomingHttpRequest();
 
-
-            return request;
-        }
+        //    return request;
+        //}
     }
 }

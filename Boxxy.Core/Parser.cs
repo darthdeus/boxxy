@@ -21,20 +21,39 @@ namespace Boxxy.Core
             return AnyChar().Then<char>(
                 c => {
                     if (f(c)) {
-                        return Return(c);
+                        return Result(c);
                     } else {
                         return Failed<char>(string.Format("Unexpected char '{0}'.", c));
                     }
                 });
         }
 
-        public static Parser<T> Return<T>(T value) {
+        public static Parser<B> Combine<A, B>(Parser<A> a, Parser<B> b) {
+            return a.Then(x => b);
+        }
+
+        /// Builds a parser for a given char <code>c</code>.
+        public static Parser<char> Char(char c) {
+            return Sat(x => x == c);
+        }
+
+        /// Builds a parser for a given string.
+        public static Parser<string> String(string str) {
+            if (str.Length == 0) {
+                return Result("");
+            } else {
+                var combined = Combine(Char(str[0]), String(str.Substring(1)));
+                return Combine(combined, Result(str));
+            }
+        }
+
+        public static Parser<T> Result<T>(T value) {
             return new Parser<T>(s => ParseResult.Passed(value, s));
         }
 
         public static Parser<T> Failed<T>(string why) {
             return new Parser<T>(s => ParseResult.Failed<T>(why));
-        } 
+        }
     }
 
     public class Parser<T>
