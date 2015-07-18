@@ -41,11 +41,18 @@ namespace Boxxy.Core
         }
 
         private void ListenerLoop() {
-            while (true) {
-                // TODO - handle manual stop from UI, which raises an exception if waiting on GetContext()
-                var context = _listener.GetContext();
-                HandleRequest(context).Wait();
+            try {
+                while (true) {
+                    // TODO - handle manual stop from UI, which raises an exception if waiting on GetContext()
+                    var context = _listener.GetContext();
+                    HandleRequest(context).Wait();
+                }
+            } catch (HttpListenerException e) {
+                // Intentionally left blank, as this only happens when the server is stopped while blocking
+                // on GetContext.
+                Console.WriteLine("Server killed.");
             }
+            
         }
 
         private async Task HandleRequest(HttpListenerContext context) {
