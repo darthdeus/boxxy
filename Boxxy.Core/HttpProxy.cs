@@ -13,24 +13,26 @@ using Newtonsoft.Json;
 
 namespace Boxxy.Core
 {
-    public class HttpProxy
+    public sealed class HttpProxy
     {
         public bool IsRunning { get; private set; }
 
-        private readonly string _destination;
-        private readonly HttpListener _listener;
+        private string _destination;
+        private HttpListener _listener;
         private CancellationTokenSource _currentTcs;
-        public IList<IncomingHttpRequest> IncomingRequests { get; private set; }
+        private ProxyStore _proxyStore;
 
-        public HttpProxy(string prefixUrl, string destination) {
-            IncomingRequests = new List<IncomingHttpRequest>();
+        public HttpProxy(ProxyStore proxyStore) {
+            _proxyStore = proxyStore;
+        }
+
+        public void Start(string prefixUrl, string destination)
+        {
             _destination = destination;
             _listener = new HttpListener();
             _listener.Prefixes.Add(prefixUrl);
             IsRunning = false;
-        }
-
-        public void Start() {
+ 
             _listener.Start();
             IsRunning = true;
 
@@ -57,7 +59,7 @@ namespace Boxxy.Core
 
         private async Task HandleRequest(HttpListenerContext context) {
             var incomingRequest = new IncomingHttpRequest(context);
-            IncomingRequests.Add(incomingRequest);
+            _proxyStore.Requests.Add(incomingRequest);
             OnRequest(incomingRequest);
 
             var serverResponse = await Forward(incomingRequest);
@@ -162,7 +164,7 @@ namespace Boxxy.Core
 
         public event Action<IncomingHttpRequest> Request;
 
-        protected virtual void OnRequest(IncomingHttpRequest obj) {
+        private void OnRequest(IncomingHttpRequest obj) {
             if (Request != null) {
                 Request.Invoke(obj);
             }

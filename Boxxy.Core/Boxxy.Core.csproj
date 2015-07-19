@@ -59,6 +59,7 @@
     <Compile Include="HttpProxy.cs" />
     <Compile Include="HttpRequestSerializer.cs" />
     <Compile Include="IncomingHttpRequest.cs" />
+    <Compile Include="ProxyStore.cs" />
     <Compile Include="Parser.cs" />
     <Compile Include="ParseResult.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
