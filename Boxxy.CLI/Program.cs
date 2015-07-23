@@ -13,6 +13,13 @@ namespace Boxxy
         void Run();
     }
 
+    public class InputProcessingError : Exception
+    {
+        public InputProcessingError(string message): base(message) {
+            
+        }
+    }
+
     internal class MainScreen : IScreen
     {
         private readonly ProxyStore _store;
@@ -90,12 +97,11 @@ namespace Boxxy
                         Console.WriteLine("Are you sure? Y/N");
                         var key = Console.ReadKey().KeyChar;
                         if (key == 'Y' || key == 'y') {
-                            _store.Requests.Clear();                            
+                            _store.Requests.Clear();
                         }
                     }
                 } else {
-                    // TODO - better exception
-                    throw new ArgumentException();
+                    throw new InputProcessingError("Unexpected end of input.");
                 }
             }
         }
@@ -123,18 +129,21 @@ namespace Boxxy
                 }
 
                 Console.WriteLine("---------------------------------------");
-                Console.WriteLine("b) Go back");
+                Console.WriteLine("a) Add a new header");
                 Console.WriteLine("d) Delete request");
                 Console.WriteLine("m) Change method");
                 Console.WriteLine("u) Change URL");
                 Console.WriteLine("p) Replay the request (send it to the destination as is)");
+                Console.WriteLine("b) Go back");
                 Console.WriteLine();
 
                 string input = Console.ReadLine();
                 if (input != null) {
                     input = input.Trim();
 
-                    if (input == "b") {
+                    if (input == "a") {
+                        new AddHeaderScreen(request).Run();
+                    } else if (input == "b") {
                         break;
                     } else if (input == "m") {
                         new ChangeMethodScreen(request).Run();
@@ -147,15 +156,85 @@ namespace Boxxy
                         int index = int.Parse(input) - 1;
 
                         if (index >= 0 && index < request.Headers.Count) {
-                            // TODO - header detail screen
-                            // new RequestDetailScreen(_store, index).Run();
+                            new HeaderDetailScreen(request, index).Run();
                         } else {
                             Console.WriteLine("Invalid header index.");
                         }
                     }
                 } else {
-                    // TODO - better exception
-                    throw new ArgumentException();
+                    throw new InputProcessingError("Unexpected end of input.");
+                }
+            }
+        }
+    }
+
+    internal class AddHeaderScreen
+    {
+        private readonly IncomingHttpRequest _request;
+
+        public AddHeaderScreen(IncomingHttpRequest request) {
+            _request = request;
+        }
+
+        public void Run() {
+            Console.Clear();
+            Console.WriteLine("Type a new header in the format 'Name: Value' and press ENTER to add it, or simply press ENTER without typing anything to cancel.");
+            Console.WriteLine();
+
+            var regex = new Regex("^.+:.+$");
+            while (true) {
+                string line = Console.ReadLine();
+                if (line != null && regex.IsMatch(line)) {
+                    int i = line.IndexOf(':');
+
+                    var header = new Header(line.Substring(0, i).Trim(), line.Substring(i + 1).Trim());
+                    _request.Headers.Add(header);
+                    break;
+                } else {
+                    Console.WriteLine("Invalid header, please try again in the 'Name: Value' format.");
+                    Console.WriteLine();
+                }
+            }
+
+        }
+    }
+
+    internal class HeaderDetailScreen : IScreen
+    {
+        private readonly IncomingHttpRequest _request;
+        private readonly int _index;
+
+        public HeaderDetailScreen(IncomingHttpRequest request, int index) {
+            _request = request;
+            _index = index;
+        }
+
+        public void Run() {
+            while (true) {
+                var header = _request.Headers[_index];
+
+                Console.Clear();
+                Console.WriteLine("Editing header\n{0}: {1}\n", header.Name, header.Value);
+                Console.WriteLine();
+                Console.WriteLine("To change the name, type 'n ' followed by the new name.");
+                Console.WriteLine("To change the value, type 'v ' followed by the new value.");
+                Console.WriteLine("For example 'n Content-Type' will change the header name to 'Content-Type'.");
+                Console.WriteLine();
+                Console.WriteLine("d) Delete the header");
+                Console.WriteLine();
+
+                string input = Console.ReadLine();
+                if (input != null) {
+                    input = input.Trim();
+
+                    if (input.Length >= 2 && input.Substring(0, 2) == "n ") {
+                        header.Name = input.Substring(2);
+                    } else if (input.Length >= 2 && input.Substring(0, 2) == "v ") {
+                        header.Value = input.Substring(2);
+                    } else if (input == "d") {
+                        _request.Headers.RemoveAt(_index);
+                        break;
+                    }
                 }
             }
         }
@@ -219,24 +298,11 @@ namespace Boxxy
             var proxy = new HttpProxy(store);
             proxy.Start("http://localhost:8080/", "http://requestb.in/pa43a9pa");
 
-            new MainScreen(store).Run();
-
-            //while (true) {
-            //    var i = Console.ReadKey();
-
-            //    char c = i.KeyChar;
-            //    Console.Clear();
-            //    Console.Out.Flush();
-            //    Console.WriteLine((int) c);
-
-            //    if (c == 'a') {
-            //        Console.WriteLine("jo");
-            //    } else {
-            //        Console.WriteLine("ne");
-            //    }
-            //}
-
-            //new Application().Run();
+            try {
+                new MainScreen(store).Run();
+            } catch (QuitMenu) {
+                // Intentionally ignored, the exception is only used for control flow.
+            }
         }
     }
 }
