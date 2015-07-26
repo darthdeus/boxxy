@@ -51,20 +51,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AddHeaderScreen.cs" />
-    <Compile Include="ChangeMethodScreen.cs" />
-    <Compile Include="ChangeUrlScreen.cs" />
+    <Compile Include="Screens\AddHeaderScreen.cs" />
+    <Compile Include="Screens\ChangeMethodScreen.cs" />
+    <Compile Include="Screens\ChangeUrlScreen.cs" />
     <Compile Include="CommandLineInterface.cs" />
-    <Compile Include="HeaderDetailScreen.cs" />
+    <Compile Include="Screens\HeaderDetailScreen.cs" />
     <Compile Include="InputProcessingError.cs" />
-    <Compile Include="IScreen.cs" />
-    <Compile Include="ListRequestsScreen.cs" />
+    <Compile Include="Screens\IScreen.cs" />
+    <Compile Include="Screens\ListRequestsScreen.cs" />
     <Compile Include="MainScreen.cs" />
-    <Compile Include="Menu.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QuitMenu.cs" />
-    <Compile Include="RequestDetailScreen.cs" />
+    <Compile Include="Screens\RequestDetailScreen.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

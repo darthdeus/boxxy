@@ -1,4 +1,4 @@
-﻿namespace Boxxy
+﻿namespace Boxxy.Screens
 {
     internal interface IScreen
     {

@@ -36,12 +36,15 @@ namespace Boxxy.Core
         [JsonIgnore]
         public HttpListenerRequest Request { get; set; }
 
+        public bool IsSent { get; set; }
+
         public IncomingHttpRequest(HttpListenerContext context) {
             Headers = new List<Header>();
             Request = context.Request;
             var request = context.Request;
             Response = context.Response;
             CreatedAt = DateTime.UtcNow;
+            IsSent = false;
 
             Body = new StreamReader(request.InputStream).ReadToEnd();
             Uri = request.Url;

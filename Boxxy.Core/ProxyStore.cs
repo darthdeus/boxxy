@@ -4,10 +4,9 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Security;
-using Boxxy.Core;
 using Newtonsoft.Json;
 
-namespace Boxxy
+namespace Boxxy.Core
 {
     public class ProxyStore
     {
@@ -80,7 +79,7 @@ namespace Boxxy
                     RemoveRequestFile(request);
                 } catch (IOException) {
                     // There's no good way to recover from exceptions here, so we'll just let them
-                    // all through
+                    // all through.
                     throw;
                 }
             }

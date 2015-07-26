@@ -1,14 +1,10 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
-using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 
 namespace Boxxy.Core
 {
@@ -19,7 +15,7 @@ namespace Boxxy.Core
         private string _destination;
         private HttpListener _listener;
         private CancellationTokenSource _currentTcs;
-        private ProxyStore _proxyStore;
+        private readonly ProxyStore _proxyStore;
 
         public HttpProxy(ProxyStore proxyStore) {
             _proxyStore = proxyStore;
@@ -44,13 +40,13 @@ namespace Boxxy.Core
         private void ListenerLoop() {
             try {
                 while (true) {
-                    // TODO - handle manual stop from UI, which raises an exception if waiting on GetContext()
                     var context = _listener.GetContext();
                     HandleRequest(context).Wait();
                 }
             } catch (HttpListenerException e) {
                 // Intentionally left blank, as this only happens when the server is stopped while blocking
-                // on GetContext.
+                // on GetContext, which happens every time the user force-stops the proxy. This is intentional
+                // and based on the MSDN docs.
                 Console.WriteLine("Server killed.");
             }
             

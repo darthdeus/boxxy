@@ -2,7 +2,7 @@
 using System.Text.RegularExpressions;
 using Boxxy.Core;
 
-namespace Boxxy
+namespace Boxxy.Screens
 {
     internal class AddHeaderScreen
     {

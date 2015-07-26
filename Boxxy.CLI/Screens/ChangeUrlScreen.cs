@@ -1,7 +1,7 @@
 ﻿using System;
 using Boxxy.Core;
 
-namespace Boxxy
+namespace Boxxy.Screens
 {
     internal class ChangeUrlScreen : IScreen
     {

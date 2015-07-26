@@ -1,7 +1,8 @@
 using System;
 using System.Text.RegularExpressions;
+using Boxxy.Core;
 
-namespace Boxxy
+namespace Boxxy.Screens
 {
     internal class ListRequestsScreen : IScreen
     {
@@ -16,7 +17,11 @@ namespace Boxxy
                 Console.Clear();
                 for (int i = 0; i < _store.Requests.Count; i++) {
                     var request = _store.Requests[i];
-                    Console.WriteLine("{0}) {1} {2}", i + 1, request.HttpMethod, request.Uri);
+                    Console.WriteLine("{0} {1}) {2} {3}",
+                        request.IsSent ? "+" : "?",
+                        i + 1,
+                        request.HttpMethod,
+                        request.Uri);
                 }
 
                 Console.WriteLine("---------------------------------------");

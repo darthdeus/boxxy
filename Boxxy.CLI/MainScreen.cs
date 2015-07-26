@@ -1,4 +1,6 @@
 ﻿using System;
+using Boxxy.Core;
+using Boxxy.Screens;
 
 namespace Boxxy
 {
