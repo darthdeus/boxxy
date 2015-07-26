@@ -15,6 +15,11 @@ namespace Boxxy.Screens
         public void Run() {
             while (true) {
                 Console.Clear();
+
+                if (_store.Requests.Count == 0) {
+                    Console.WriteLine("There are no requests yet.");
+                }
+
                 for (int i = 0; i < _store.Requests.Count; i++) {
                     var request = _store.Requests[i];
                     Console.WriteLine("{0} {1}) {2} {3}",
@@ -23,6 +28,11 @@ namespace Boxxy.Screens
                         request.HttpMethod,
                         request.Uri);
                 }
+
+                Console.WriteLine();
+                Console.WriteLine("+ ... sent request\n? ... unsent request");
+                Console.WriteLine("\tSent requests have response information attached to them.");
+                Console.WriteLine();
 
                 Console.WriteLine("---------------------------------------");
                 Console.WriteLine("d) Delete all requests");

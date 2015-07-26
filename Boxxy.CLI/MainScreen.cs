@@ -19,10 +19,13 @@ namespace Boxxy
                 Console.Clear();
 
                 if (started) {
-                    Console.WriteLine("s) stop proxy\nq) quit\nl) list all requests");
+                    Console.WriteLine("s) Stop proxy");
                 } else {
-                    Console.WriteLine("s) start proxy\nq) quit\nl) list all requests");
+                    Console.WriteLine("s) Start proxy");
                 }
+
+                Console.WriteLine("l) List all requests");
+                Console.WriteLine("q) Quit");
 
                 var key = Console.ReadKey();
 

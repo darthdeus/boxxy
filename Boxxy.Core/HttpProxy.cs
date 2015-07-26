@@ -53,84 +53,12 @@ namespace Boxxy.Core
         }
 
         private async Task HandleRequest(HttpListenerContext context) {
-            var incomingRequest = new IncomingHttpRequest(context);
+            var incomingRequest = new IncomingHttpRequest(context, _destination);
             _proxyStore.Requests.Add(incomingRequest);
             OnRequest(incomingRequest);
-
-            var serverResponse = await Forward(incomingRequest);
-
-            //incomingRequest.Request = null;
-            //incomingRequest.Response = null;
-            //var str = JsonConvert.SerializeObject(incomingRequest);
-            //Console.WriteLine(str);
-
-            //using (var writer = new StreamWriter("neco.json")) {
-            //    writer.Write(str);
-            //}
-
-            //var hh = JsonConvert.DeserializeObject<IncomingHttpRequest>(str);
-            //Console.WriteLine(hh);
-
-            await Respond(incomingRequest, serverResponse);
         }
 
-        private async Task<HttpResponseMessage> Forward(IncomingHttpRequest incomingRequest) {
-            HttpResponseMessage response;
-            using (var client = new HttpClient {Timeout = TimeSpan.FromSeconds(10)}) {
-                var request = incomingRequest.Request;
 
-                var requestMethod = ParseHttpMethod(request.HttpMethod);
-                var message = new HttpRequestMessage(requestMethod, _destination);
-
-                // TODO - fix me
-                //Console.WriteLine(new HttpRequestSerializer().ToString(request));
-
-                foreach (var header in request.Headers.AllKeys) {
-                    var values = request.Headers.GetValues(header);
-                    message.Headers.Add(header, values);
-                }
-
-                message.Headers.Add("herp", "trolol");
-                message.Headers.Host = new Uri(_destination).Host;
-
-                if (requestMethod != HttpMethod.Get) {
-                    var originalRequestContent = new StreamReader(request.InputStream).ReadToEnd();
-                    message.Content = new ByteArrayContent(Encoding.UTF8.GetBytes(originalRequestContent));
-                }
-
-                // TODO - do this properly async
-                response = await client.SendAsync(message);
-            }
-
-            var destinationResponseString = await response.Content.ReadAsStringAsync();
-            //Console.WriteLine("got reply: {0}", destinationResponseString);
-
-            return response;
-        }
-
-        private async Task Respond(IncomingHttpRequest incomingRequest, HttpResponseMessage serverResponse) {
-            await incomingRequest.RespondWith(serverResponse);
-        }
-
-        private HttpMethod ParseHttpMethod(string httpMethod) {
-            switch (httpMethod.ToUpper()) {
-                case "GET":
-                    return HttpMethod.Get;
-                case "POST":
-                    return HttpMethod.Post;
-                case "PUT":
-                    return HttpMethod.Put;
-                case "DELETE":
-                    return HttpMethod.Delete;
-                case "OPTIONS":
-                    return HttpMethod.Options;
-                case "TRACE":
-                    return HttpMethod.Trace;
-                default:
-                    var msg = string.Format("{0} is not a valid HTTP method", httpMethod);
-                    throw new ArgumentException("httpMethod", msg);
-            }
-        }
 
         public void Stop() {
             _listener.Stop();

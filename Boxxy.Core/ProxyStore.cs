@@ -11,11 +11,11 @@ namespace Boxxy.Core
     public class ProxyStore
     {
         private readonly string _path;
-        public List<IncomingHttpRequest> Requests { get; private set; }
+        public IList<IncomingHttpRequest> Requests { get; set; }
 
-        public ProxyStore(string path) {
+        public ProxyStore(string path, IList<IncomingHttpRequest> requests) {
             _path = path;
-            Requests = new List<IncomingHttpRequest>();
+            Requests = requests;
         }
 
         public List<string> Sync() {
@@ -27,7 +27,7 @@ namespace Boxxy.Core
                     Debug.WriteLine("Syncing request to {0}", path);
 
                     using (var writer = new StreamWriter(path)) {
-                        string jsonString = JsonConvert.SerializeObject(this);
+                        string jsonString = JsonConvert.SerializeObject(request);
                         writer.Write(jsonString);
                     }
                 } catch (DirectoryNotFoundException) {

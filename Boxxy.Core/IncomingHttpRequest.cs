@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -15,6 +16,8 @@ namespace Boxxy.Core
         public string Name { get; set; }
         public string Value { get; set; }
 
+        public Header() {}
+
         public Header(string name, string value) {
             Name = name;
             Value = value;
@@ -23,32 +26,45 @@ namespace Boxxy.Core
 
     public class IncomingHttpRequest
     {
-        public ObservableCollection<Header> ObservableHeaders { get; set; }
         public IList<Header> Headers { get; set; }
         public Uri Uri { get; set; }
         public string HttpMethod { get; set; }
         public string Body { get; set; }
         public DateTime CreatedAt { get; set; }
 
-        // TODO - remove me later
-        [JsonIgnore]
-        public HttpListenerResponse Response { get; set; }
-        [JsonIgnore]
-        public HttpListenerRequest Request { get; set; }
-
+        public bool IsDeserialized { get; set; }
         public bool IsSent { get; set; }
 
-        public IncomingHttpRequest(HttpListenerContext context) {
+        /// _originalClientResponseSocket attributes, initialized only when the request <code>IsSent</code> is true.
+        public IList<Header> ResponseHeaders { get; set; }
+
+        public string ResponseBody { get; set; }
+
+        public string Destination { get; set; }
+
+        /// <summary>
+        /// Represents a connection which is used to forward the response from the destination server.
+        /// </summary>
+        [JsonIgnore] private readonly HttpListenerResponse _originalClientResponseSocket;
+
+        public IncomingHttpRequest() {
+            IsDeserialized = false;
+            IsSent = false;
+        }
+        
+        public IncomingHttpRequest(HttpListenerContext context, string destination) {
+            Destination = destination;
             Headers = new List<Header>();
-            Request = context.Request;
-            var request = context.Request;
-            Response = context.Response;
+            _originalClientResponseSocket = context.Response;
             CreatedAt = DateTime.UtcNow;
             IsSent = false;
 
+            var request = context.Request;
             Body = new StreamReader(request.InputStream).ReadToEnd();
             Uri = request.Url;
             HttpMethod = request.HttpMethod;
+
+            ResponseHeaders = new List<Header>();
 
             foreach (var headerKey in request.Headers.AllKeys) {
                 string value = string.Join(",", request.Headers[headerKey]);
@@ -56,15 +72,91 @@ namespace Boxxy.Core
             }
         }
 
-        public async Task RespondWith(HttpResponseMessage serverResponse) {
+        public static IncomingHttpRequest FromString(string str) {
+            var request = JsonConvert.DeserializeObject<IncomingHttpRequest>(str);
+            request.IsDeserialized = true;
+
+            return request;
+        }
+
+        public async Task Play() {
+            var serverResponse = await Forward();
+
+            IsSent = true;
+
+            if (!IsDeserialized && _originalClientResponseSocket != null) {
+                await RespondWith(serverResponse);
+            } else {                
+                Debug.WriteLine("The request was deserialized from disk, and therefore can't be forwarded back to the client.");
+            }
+        }
+
+        private async Task<HttpResponseMessage> Forward() {
+            HttpResponseMessage response;
+            using (var client = new HttpClient {Timeout = TimeSpan.FromSeconds(10)}) {
+                // TODO - handle POST
+                var requestMethod = ParseHttpMethod(HttpMethod);
+                var message = new HttpRequestMessage(requestMethod, Destination);
+
+                foreach (var header in Headers) {
+                    message.Headers.Add(header.Name, header.Value);
+                }
+
+                message.Headers.Host = new Uri(Destination).Host;
+
+                if (requestMethod != System.Net.Http.HttpMethod.Get) {
+                    message.Content = new ByteArrayContent(Encoding.UTF8.GetBytes(Body));
+                }
+
+                response = await client.SendAsync(message);
+            }
+
+
+            ResponseHeaders.Clear();
+            foreach (var header in response.Headers) {
+                string value = string.Join(",", header.Value);
+                ResponseHeaders.Add(new Header(header.Key, value));
+            }
+            
+            ResponseBody = await response.Content.ReadAsStringAsync();
+            return response;
+        }
+
+        private async Task RespondWith(HttpResponseMessage serverResponse) {
             var buffer = await serverResponse.Content.ReadAsByteArrayAsync();
 
-            Response.ContentLength64 = buffer.Length;
-            Response.ContentEncoding = Encoding.UTF8;
+            _originalClientResponseSocket.ContentLength64 = buffer.Length;
+            _originalClientResponseSocket.ContentEncoding = Encoding.UTF8;
 
-            var output = Response.OutputStream;
+            var output = _originalClientResponseSocket.OutputStream;
+
+            foreach (var header in ResponseHeaders) {
+                _originalClientResponseSocket.Headers.Add(header.Name, header.Value);
+            }
+
             output.Write(buffer, 0, buffer.Length);
             output.Close();
+        }
+
+
+        private HttpMethod ParseHttpMethod(string httpMethod) {
+            switch (httpMethod.ToUpper()) {
+                case "GET":
+                    return System.Net.Http.HttpMethod.Get;
+                case "POST":
+                    return System.Net.Http.HttpMethod.Post;
+                case "PUT":
+                    return System.Net.Http.HttpMethod.Put;
+                case "DELETE":
+                    return System.Net.Http.HttpMethod.Delete;
+                case "OPTIONS":
+                    return System.Net.Http.HttpMethod.Options;
+                case "TRACE":
+                    return System.Net.Http.HttpMethod.Trace;
+                default:
+                    var msg = string.Format("{0} is not a valid HTTP method", httpMethod);
+                    throw new ArgumentException("httpMethod", msg);
+            }
         }
     }
 }
