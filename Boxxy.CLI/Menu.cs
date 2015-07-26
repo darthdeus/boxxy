@@ -10,7 +10,7 @@ namespace Boxxy
     {
         public void Run()
         {
-            var store = new ProxyStore();
+            var store = new ProxyStore("..\\..");
 
             var proxy = new HttpProxy(store);
             proxy.Start("http://localhost:8080/", "http://requestb.in/pa43a9pa");

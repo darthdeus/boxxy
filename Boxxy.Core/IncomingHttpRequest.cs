@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace Boxxy.Core
 {
@@ -21,23 +23,25 @@ namespace Boxxy.Core
 
     public class IncomingHttpRequest
     {
+        public ObservableCollection<Header> ObservableHeaders { get; set; }
         public IList<Header> Headers { get; set; }
-        public HttpListenerResponse Response { get; set; }
         public Uri Uri { get; set; }
         public string HttpMethod { get; set; }
         public string Body { get; set; }
+        public DateTime CreatedAt { get; set; }
 
         // TODO - remove me later
+        [JsonIgnore]
+        public HttpListenerResponse Response { get; set; }
+        [JsonIgnore]
         public HttpListenerRequest Request { get; set; }
-
-        public IncomingHttpRequest() {
-        }
 
         public IncomingHttpRequest(HttpListenerContext context) {
             Headers = new List<Header>();
             Request = context.Request;
             var request = context.Request;
             Response = context.Response;
+            CreatedAt = DateTime.UtcNow;
 
             Body = new StreamReader(request.InputStream).ReadToEnd();
             Uri = request.Url;

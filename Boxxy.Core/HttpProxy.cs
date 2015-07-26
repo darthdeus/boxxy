@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
-using System.Reactive.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading;
@@ -139,27 +138,6 @@ namespace Boxxy.Core
 
         public void Stop() {
             _listener.Stop();
-        }
-
-        private IObservable<HttpListenerContext> Requests() {
-            return Observable.Create(
-                (IObserver<HttpListenerContext> observer) => {
-                    var loop = true;
-
-                    Task.Run(
-                        () => {
-                            while (loop) {
-                                var context = _listener.GetContext();
-                                observer.OnNext(context);
-                            }
-                        });
-
-                    return () => {
-                        // TODO - replace this with proper logging
-                        Console.WriteLine("HttpProxy._listener stopped due to Rx stream being closed.");
-                        loop = false;
-                    };
-                });
         }
 
         public event Action<IncomingHttpRequest> Request;
