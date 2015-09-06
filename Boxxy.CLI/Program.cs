@@ -30,6 +30,11 @@ namespace Boxxy
             string syncPath = args[1];
             string destination = args[2];
 
+            if (!Directory.Exists(syncPath)) {
+                Console.WriteLine("Invalid sync directory, exiting.");
+                return;
+            }
+
             string[] files = Directory.GetFiles(syncPath, "*.json");
 
             var requests = new List<IncomingHttpRequest>();

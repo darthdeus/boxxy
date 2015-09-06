@@ -3,7 +3,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage[czech]{babel}
 
-\title{Debugovací HTTP Proxy}
+\title{Debugovací HTTP Proxy - Zápočtový program na Programování 2 (NPRG031)}
 \author{Jakub Arnold}
 \date{}
 
@@ -34,7 +34,25 @@ a nebo případně:
 	\item Allow NuGet to download missing packages
 \end{enumerate}
 
-Požadovaná knihovna je velmi malá a slouží pouze pro parsování a serializaci v jednom konkrétním místě aplikace (třída \emph{ProxyStore}.)
+Požadovaná knihovna je velmi malá a slouží pouze pro parsování a serializaci v jednom konkrétním místě aplikace (třída \emph{ProxyStore}).
+
+Program pracuje s parametry z příkazové řádky. Konkrétně \emph{port}, \emph{sync adresář}, \emph{cílový server} a volitelně přepínač \emph{i}, který zajistí, že příchozí požadavky nejsou hned přeposlány na server, ale uživatel je musí ručně poslat dál (volba \emph{Replay request} v menu detailu HTTP požadavku).
+
+\section{Testování}
+
+Program není úplně snadné ručně testovat bez nástrojů pro práci s HTTP. Pro vyzkoušení je nejjednodušší nastavit přeposílání proxy např. na službu RequestBin \cite{requestbin}, která zachycuje příchozí požadavky a umožnuje je jednoduše zobrazit.
+
+Konkrétně spuštění pak může probíhat následovně:
+
+\begin{itemize}
+	\item Zkompilovat celý solution
+	\item V terminálu dojít do podadresáře \emph{Boxxy.CLI\textbackslash bin\textbackslash Debug}
+	\item Spustit program, např. \emph{boxxy 8080 . http://requestb.in/1g6sdjq1}
+\end{itemize}
+
+Program napřed informuje uživatele o tom, zda byl spuštěn v interaktivním režimu (předchozí příklad by pak byl konkrétně \emph{boxxy 8080 . http://requestb.in/1g6sdjq1 i}, kde \emph{i} na konci značí interaktivní režim, viz. úvod). Poté je potřeba spustit proxy, což je v hlavním menu hned vidět pod klávesovou zkratkou \emph{s}. Nyní je již server připravený příjmat příchozí požadavky, a nejjednodušší způsob jak takový požadavek udělat, je přes webový prohlížeč.
+
+Konkrétně stačí otevřít adresu \emph{http://localhost:8080} a daný HTTP požadavek by se měl v programu zobrazit.
 
 \section{Rozsah implementace}
 
@@ -106,13 +124,15 @@ Základní stavební prvek je interface \emph{IScreen}, které všechny třídy 
 
 Víceúrovňová navigace v menu je poté řešena zanořeným voláním patřičných \emph{IScreen.Run()}, kde v rámci průběhu jedné iterace obrazovky je spuštěna jiná, která kompletně převezme kontrolu, až dokud se uživatel nerozhodne vrátit na původní obrazovku.
 
-Všechny třídy implementující \emph{IScreen} fungují na podobném principu (převzato z principu fungování update/render smyček u grafických programů/her), a to že drží nějaký vnitřní stav který ovlivňuje vykreslení obrazovky, a při jakékoliv interakci s uživatelem se celé menu smaže a překreslí (za pomoci \emph{System.Console.Clear}.)
+Všechny třídy implementující \emph{IScreen} fungují na podobném principu (převzato z principu fungování update/render smyček u grafických programů/her), a to že drží nějaký vnitřní stav který ovlivňuje vykreslení obrazovky, a při jakékoliv interakci s uživatelem se celé menu smaže a překreslí (za pomoci \emph{System.Console.Clear}).
 
-Tímto způsobem je možné jednoduše docílit rozhranní, které působí velmi interaktivně, a to s použitím \emph{Console.ReadKey()}, který umožní rovnou reagovat na stisknutou klávesu bez nutnosti zmáčknout Enter (na rozdíl od \emph{Console.Read()}, který používá nějaký vnitřní input buffer a vrací hodnotu až po stisku Enteru.) Tímto je možné uživatelské rozhranní překreslit okamžitě když uživatel stiskne klávesu, viz. např. úvodní obrazovka při spuštění proxy.
+Tímto způsobem je možné jednoduše docílit rozhranní, které působí velmi interaktivně, a to s použitím \emph{Console.ReadKey()}, který umožní rovnou reagovat na stisknutou klávesu bez nutnosti zmáčknout Enter (na rozdíl od \emph{Console.Read()}, který používá nějaký vnitřní input buffer a vrací hodnotu až po stisku Enteru). Tímto je možné uživatelské rozhranní překreslit okamžitě když uživatel stiskne klávesu, viz. např. úvodní obrazovka při spuštění proxy.
+
 
 \begin{thebibliography}{100}
 	\bibitem{async} Asynchronous Programming with Async and Await, https://msdn.microsoft.com/en-us/library/hh191443.aspx
 	\bibitem{newtonsoft} Json.NET, http://www.newtonsoft.com/json
+	\bibitem{requestbin} RequestBin, http://requestb.in/
 \end{thebibliography}
 
 \end{document}
