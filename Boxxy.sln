@@ -7,8 +7,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Boxxy.CLI", "Boxxy.CLI\Boxx
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Boxxy.Core", "Boxxy.Core\Boxxy.Core.csproj", "{DECC5E44-7D3A-44A8-9A9F-734990123F01}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Boxxy.Core.Tests", "Boxxy.Core.Tests\Boxxy.Core.Tests.csproj", "{8DABD17D-0B79-4024-8F4D-16421311947B}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,10 +21,6 @@ Global
 		{DECC5E44-7D3A-44A8-9A9F-734990123F01}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DECC5E44-7D3A-44A8-9A9F-734990123F01}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DECC5E44-7D3A-44A8-9A9F-734990123F01}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8DABD17D-0B79-4024-8F4D-16421311947B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8DABD17D-0B79-4024-8F4D-16421311947B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8DABD17D-0B79-4024-8F4D-16421311947B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8DABD17D-0B79-4024-8F4D-16421311947B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
