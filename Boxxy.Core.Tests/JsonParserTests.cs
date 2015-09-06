@@ -28,7 +28,7 @@ namespace Boxxy.Core.Tests
             var res2 = Json.String().Run("\"hell\\\"o\"");
 
             Assert.IsTrue(res2.Success);
-            Assert.AreEqual("hell\"o", res2.Result.Item1.Value);
+            Assert.AreEqual("hell\\\"o", res2.Result.Item1.Value);
         }
 
         [TestMethod]
@@ -52,6 +52,5 @@ namespace Boxxy.Core.Tests
             Assert.AreEqual(123, ((JsonNumber)res1.Result.Item1.Value["foo"]).Value);
             Assert.AreEqual("baz", ((JsonString)res1.Result.Item1.Value["bar"]).Value);
         }
-
     }
 }

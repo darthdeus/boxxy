@@ -73,10 +73,36 @@ namespace Boxxy.Core
         }
 
         public static IncomingHttpRequest FromString(string str) {
-            var request = JsonConvert.DeserializeObject<IncomingHttpRequest>(str);
-            request.IsDeserialized = true;
+            ParseResult<JsonObject> res = Json.Parse(str);
 
-            return request;
+            if (res.Success)
+            {
+                var obj = res.Result.Item1;
+                var dict = obj.Value;
+
+                var request = new IncomingHttpRequest
+                {
+                    Uri = new Uri(dict["Uri"].ToRep<string>()),
+                    Destination = dict["Destination"].ToRep<string>(),
+                    HttpMethod = dict["HttpMethod"].ToRep<string>(),
+                    CreatedAt = DateTime.Parse(dict["CreatedAt"].ToRep<string>()),
+                    Body = dict["Body"].ToRep<string>(),
+                    IsDeserialized = true
+                };
+
+                // TODO - headers
+
+                return request;
+            }
+            else
+            {
+                throw new InvalidStorageFormat();
+            }
+
+            //var request = JsonConvert.DeserializeObject<IncomingHttpRequest>(str);
+            //request.IsDeserialized = true;
+
+            //return request;
         }
 
         public async Task Play() {

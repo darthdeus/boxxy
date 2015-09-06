@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace Boxxy.Core
 {
@@ -11,26 +12,61 @@ namespace Boxxy.Core
         T Value { get; set; }
     }
 
+    public class InvalidToRepUsage : Exception
+    {
+    }
+
     public abstract class JsonValue
     {
+        // A workaround for not having either dependent names
+        public abstract T ToRep<T>();
     }
 
     public class JsonString : JsonValue, JsonValue<string>
     {
         public string Value { get; set; }
+
+        public override T ToRep<T>() {
+            if (typeof (T) != typeof (string)) throw new InvalidToRepUsage();
+            return (T) (object) Value;
+        }
     }
 
-    public class JsonNumber : JsonValue, JsonValue<Double>
+    public class JsonNumber : JsonValue, JsonValue<double>
     {
         public double Value { get; set; }
+
+        public override T ToRep<T>() {
+            if (typeof (T) != typeof (double)) throw new InvalidToRepUsage();
+            return (T) (object) Value;
+        }
     }
 
-    public class JsonObject : JsonValue, JsonValue<Dictionary<String, JsonValue>>
+    public class JsonObject : JsonValue, JsonValue<Dictionary<string, JsonValue>>
     {
         public Dictionary<string, JsonValue> Value { get; set; }
 
         public JsonObject() {
             Value = new Dictionary<string, JsonValue>();
+        }
+
+        public override T ToRep<T>() {
+            if (typeof (T) != typeof (Dictionary<string, JsonValue>)) throw new InvalidToRepUsage();
+            return (T) (object) Value;
+        }
+    }
+
+    public class JsonArray : JsonValue, JsonValue<List<JsonValue>>
+    {
+        public List<JsonValue> Value { get; set; }
+
+        public JsonArray() {
+            Value = new List<JsonValue>();
+        }
+
+        public override T ToRep<T>() {
+            if (typeof (T) != typeof (List<JsonValue>)) throw new InvalidToRepUsage();
+            return (T) (object) Value;
         }
     }
 
@@ -38,17 +74,14 @@ namespace Boxxy.Core
     {
         internal static Parser<JsonValue> AnyValue() {
             return
+                Array().Cast<JsonValue>() |
                 String().Cast<JsonValue>() |
                 Number().Cast<JsonValue>() |
                 Object().Cast<JsonValue>();
         }
 
         internal static Parser<JsonString> String() {
-            var parser = Parser.Bracket(
-                Parser.Char('"'),
-                //Parser.EscapedString('"'),
-                Parser.ToCharString(Parser.NoneOf("\"")),
-                Parser.Char('"'));
+            var parser = Parser.EscapedString('"');
 
             return parser.Then(s => Parser.Result(new JsonString {Value = s}));
         }
@@ -74,6 +107,15 @@ namespace Boxxy.Core
                     });
         }
 
+        internal static Parser<JsonArray> Array()
+        {
+            return Parser.Bracket(
+                Parser.Char('['),
+                Parser.SepBy(AnyValue(), Parser.Char(',').IgnoreWhitespace()),
+                Parser.Char(']')).Then(
+                    items => Parser.Result(new JsonArray { Value = items }));
+        }
+
         private static Parser<Tuple<string, JsonValue>> KeyValuePairParser() {
             return String().Then<Tuple<string, JsonValue>>(
                 key => Parser.Char(':').IgnoreWhitespace().Then<Tuple<string, JsonValue>>(
@@ -83,9 +125,8 @@ namespace Boxxy.Core
                     }));
         }
 
-        public static JsonValue Parse(string s) {
-            // TODO
-            return null;
+        public static ParseResult<JsonObject> Parse(string s) {
+            return Object().Run(s);
         }
     }
 }

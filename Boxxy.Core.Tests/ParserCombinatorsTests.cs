@@ -49,23 +49,23 @@ namespace Boxxy.Core.Tests
 
         [TestMethod]
         public void EscapedStringTest() {
-            var res1 = Parser.EscapedString('"').Run("");
+            var res1 = Parser.EscapedString('"').Run("\"\"");
             Assert.IsTrue(res1.Success);
             Assert.AreEqual("", res1.Result.Item1);
 
-            var res2 = Parser.EscapedString('"').Run("foo");
+            var res2 = Parser.EscapedString('"').Run("\"foo\"");
             Assert.IsTrue(res2.Success);
             Assert.AreEqual("foo", res2.Result.Item1);
 
-            var res3 = Parser.EscapedString('"').Run("f\\");
+            var res3 = Parser.EscapedString('"').Run("\"f\\\"");
             Assert.IsTrue(res3.Success);
-            Assert.AreEqual("f\\", res3.Result.Item1);
+            Assert.AreEqual("f\\\"", res3.Result.Item1);
 
-            var res4 = Parser.EscapedString('"').Run("f\\oo");
+            var res4 = Parser.EscapedString('"').Run("\"f\\oo\"");
             Assert.IsTrue(res4.Success);
             Assert.AreEqual("f\\oo", res4.Result.Item1);
 
-            var res5 = Parser.EscapedString('"').Run("f\\\"oo");
+            var res5 = Parser.EscapedString('"').Run("\"f\\\"oo\"");
             Assert.IsTrue(res5.Success);
             Assert.AreEqual("f\\\"oo", res5.Result.Item1);
         }

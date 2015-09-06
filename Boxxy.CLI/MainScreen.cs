@@ -40,7 +40,6 @@ namespace Boxxy
 
                     case 'q':
                         throw new QuitMenu();
-                        break;
                 }
             }
         }

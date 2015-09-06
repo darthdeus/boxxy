@@ -51,8 +51,6 @@ namespace Boxxy
                 }
             }
 
-            // TODO - sync stored requests from disk
-
             var store = new ProxyStore(syncPath, requests);
             var proxy = new HttpProxy(store, interactive);
 

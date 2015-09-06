@@ -18,7 +18,23 @@
 
 \section{Kompilace a spuštění}
 
-Pro úspěšnou kompilaci je potřeba .NET framework verze 4.5 a vyšší, a to z důvodu použití funkce async/await \cite{async}, která zjednodušuje práci s asynchroním zpracováním HTTP požadavků.
+Pro úspěšnou kompilaci je potřeba .NET framework verze 4.5 a vyšší, a to z důvodu použití funkce async/await \cite{async}, která zjednodušuje práci s asynchroním zpracováním HTTP požadavků. Také je potřeba nainstalovat knihovnu Json.NET \cite{newtonsoft}, která se používá pro serializaci HTTP požadavků. Tato instalace proběhne ve Visual Studiu (příp. MonoDevelop) automaticky při první kompilaci, případně se dá pustit ručně:
+
+\begin{enumerate}
+	\item Pravým kliknutím na projekt (ne solution)
+	\item Manage NuGet packages
+\end{enumerate}
+
+a nebo případně:
+
+\begin{enumerate}
+	\item Tools
+	\item Options
+	\item NuGet package manager
+	\item Allow NuGet to download missing packages
+\end{enumerate}
+
+Požadovaná knihovna je velmi malá a slouží pouze pro parsování a serializaci v jednom konkrétním místě aplikace (třída \emph{ProxyStore}.)
 
 \section{Rozsah implementace}
 
@@ -74,7 +90,7 @@ Zde je však omezení, že původní požadavek už klientovi zpátky nepříjde
 
 \section{Implementace a použité knihovny}
 
-Program závisí pouze na knihovnách standardně distribuovaných s platformou .NET, konkrétně jmenný prostor \emph{System.Net}, který obsahuje nizkoúrovňovou implementaci samotného HTTP serveru (konkrétně \emph{System.Net.HttpListener}.) Žádné další závislosti nejsou potřeba.
+Program závisí pouze na knihovnách standardně distribuovaných s platformou .NET, konkrétně jmenný prostor \emph{System.Net}, který obsahuje nizkoúrovňovou implementaci samotného HTTP serveru (konkrétně \emph{System.Net.HttpListener}), a knihovně Json.NET \cite{newtonsoft}.
 
 Samotný program je pak rozdělen do dvou assembly, kde jedna tvoří samotnou logiku HTTP proxy (\emph{Boxxy.Core}), a druhá je uživatelské prostředí v příkazové řádce (\emph{Boxxy.CLI}). Zpracování HTTP požadavků probíhá v odděleném vlákně, a uživatel tedy může program používat, zatímco příchozí požadavky jsou zpracovány na pozadí.
 
@@ -95,7 +111,8 @@ Všechny třídy implementující \emph{IScreen} fungují na podobném principu 
 Tímto způsobem je možné jednoduše docílit rozhranní, které působí velmi interaktivně, a to s použitím \emph{Console.ReadKey()}, který umožní rovnou reagovat na stisknutou klávesu bez nutnosti zmáčknout Enter (na rozdíl od \emph{Console.Read()}, který používá nějaký vnitřní input buffer a vrací hodnotu až po stisku Enteru.) Tímto je možné uživatelské rozhranní překreslit okamžitě když uživatel stiskne klávesu, viz. např. úvodní obrazovka při spuštění proxy.
 
 \begin{thebibliography}{100}
-	\bibitem{async} Asynchronous Programming with Async and Await https://msdn.microsoft.com/en-us/library/hh191443.aspx
+	\bibitem{async} Asynchronous Programming with Async and Await, https://msdn.microsoft.com/en-us/library/hh191443.aspx
+	\bibitem{newtonsoft} Json.NET, http://www.newtonsoft.com/json
 \end{thebibliography}
 
 \end{document}

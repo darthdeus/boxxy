@@ -4,10 +4,15 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Security;
+using System.Text;
 using Newtonsoft.Json;
 
 namespace Boxxy.Core
 {
+    public class InvalidStorageFormat : Exception
+    {
+    }
+
     public class ProxyStore
     {
         private readonly string _path;
@@ -27,8 +32,8 @@ namespace Boxxy.Core
                     Debug.WriteLine("Syncing request to {0}", path);
 
                     using (var writer = new StreamWriter(path)) {
-                        string jsonString = JsonConvert.SerializeObject(request);
-                        writer.Write(jsonString);
+                        string strRep = Serialize(request);
+                        writer.Write(strRep);
                     }
                 } catch (DirectoryNotFoundException) {
                     Console.WriteLine("Directory not found at path {0}", _path);
@@ -86,6 +91,10 @@ namespace Boxxy.Core
             var request = Requests[index];
             RemoveRequestFile(request);
             Requests.RemoveAt(index);
+        }
+
+        public string Serialize(IncomingHttpRequest request) {
+            return JsonConvert.SerializeObject(request);
         }
     }
 }

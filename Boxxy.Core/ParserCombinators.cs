@@ -105,13 +105,14 @@ namespace Boxxy.Core
         }
 
         public static Parser<List<T>> SepBy1<T, S>(Parser<T> p, Parser<S> sep) {
-            return p.Then(x => Many1(sep.Drop(p)).Then(
-                xs => {
-                    var list = new List<T>();
-                    list.Add(x);
-                    list.AddRange(xs);
-                    return Result(list);
-                }));
+            return p.Then(
+                x => Many1(sep.Drop(p)).Then(
+                    xs => {
+                        var list = new List<T>();
+                        list.Add(x);
+                        list.AddRange(xs);
+                        return Result(list);
+                    }));
         }
 
         public static Parser<List<T>> Many1<T>(Parser<T> p) {
@@ -159,11 +160,15 @@ namespace Boxxy.Core
             return ToCharString(Sat(char.IsWhiteSpace));
         }
 
-        public static Parser<string> EscapedString(char quote, bool escaped = false) {
+        public static Parser<string> EscapedString(char quote) {
+            return Char(quote).Drop(EscapedString(quote, false));
+        }        
+
+        private static Parser<string> EscapedString(char quote, bool escaped) {
             return AnyChar().Then(
-            c => {
-                // Escaped quotes are ignored, while non-escaped one terminate the parser
-                if (c == quote) {
+                c => {
+                    // Escaped quotes are ignored, while non-escaped one terminate the parser
+                    if (c == quote) {
                         if (escaped) {
                             // If we were previously in escape mode, hitting a quote simply ignores it
                             // and switches back to non-escaped mode.
@@ -172,9 +177,13 @@ namespace Boxxy.Core
                             return Result("");
                         }
                     } else if (c == '\\') {
-                        // A backslash turns on the escaping "mode", which will ignore the next quote character,
-                        // but only as long as its a quote.
-                        return Concat(Result(c), EscapedString(quote, true));
+                        if (escaped) {
+                            return Concat(Result(c), EscapedString(quote, false));
+                        } else {
+                            // A backslash turns on the escaping "mode", which will ignore the next quote character,
+                            // but only as long as its a quote.
+                            return Concat(Result(c), EscapedString(quote, true));
+                        }
                     } else {
                         return Concat(Result(c), EscapedString(quote, false));
                     }
@@ -231,10 +240,7 @@ namespace Boxxy.Core
             return Parser.Whitespace().Then(
                 _wl =>
                     Then(
-                        x =>
-                            Parser.Whitespace().Then(
-                                _wr =>
-                                    Parser.Result(x))));
+                        x => Parser.Result(x)));
         }
 
         public static Parser<T> operator |(Parser<T> lhs, Parser<T> rhs) {

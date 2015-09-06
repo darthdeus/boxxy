@@ -50,6 +50,7 @@
     <Compile Include="ParserCombinators.cs" />
     <Compile Include="ProxyStore.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RequestParser.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
