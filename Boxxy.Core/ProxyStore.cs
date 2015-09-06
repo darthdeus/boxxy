@@ -75,16 +75,17 @@ namespace Boxxy.Core
 
         public void Clear() {
             foreach (var request in Requests) {
-                try {
-                    RemoveRequestFile(request);
-                } catch (IOException) {
-                    // There's no good way to recover from exceptions here, so we'll just let them
-                    // all through.
-                    throw;
-                }
+                // There's no good way to recover from exceptions here, so we'll just let them all through.
+                RemoveRequestFile(request);
             }
 
             Requests.Clear();
+        }
+
+        public void RemoveRequestAt(int index) {
+            var request = Requests[index];
+            RemoveRequestFile(request);
+            Requests.RemoveAt(index);
         }
     }
 }

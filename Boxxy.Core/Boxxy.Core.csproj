@@ -45,8 +45,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="HttpProxy.cs" />
-    <Compile Include="HttpRequestSerializer.cs" />
     <Compile Include="IncomingHttpRequest.cs" />
+    <Compile Include="JsonParser.cs" />
+    <Compile Include="ParserCombinators.cs" />
     <Compile Include="ProxyStore.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

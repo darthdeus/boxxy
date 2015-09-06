@@ -54,7 +54,6 @@
     <Compile Include="Screens\AddHeaderScreen.cs" />
     <Compile Include="Screens\ChangeMethodScreen.cs" />
     <Compile Include="Screens\ChangeUrlScreen.cs" />
-    <Compile Include="CommandLineInterface.cs" />
     <Compile Include="Screens\HeaderDetailScreen.cs" />
     <Compile Include="InputProcessingError.cs" />
     <Compile Include="Screens\IScreen.cs" />
@@ -65,7 +64,6 @@
     <Compile Include="QuitMenu.cs" />
     <Compile Include="Screens\RequestDetailScreen.cs" />
     <Compile Include="Screens\ResponseDetailScreen.cs" />
-    <Compile Include="Screens\TimeoutedConsoleReader.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

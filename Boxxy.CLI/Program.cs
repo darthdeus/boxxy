@@ -10,7 +10,25 @@ namespace Boxxy
     internal static class Program
     {
         private static void Main(string[] args) {
-            string syncPath = @".";
+            if (args.Length < 3) {
+                Console.WriteLine("Usage: boxxy.exe \"Port\" \"Sync directory\" \"Destination host\"");
+                return;
+            }
+
+            bool interactive = args.Length == 4 && args[3] == "i";
+
+            if (interactive) {
+                Console.WriteLine("Starting in INTERACTIVE mode, all requests are automatically PAUSED.");
+            } else {
+                Console.WriteLine("Starting in NON-INTERACTIVE mode, all requests are automatically FORWARDED.");
+            }
+
+            Console.WriteLine("Press ENTER to continue.");
+            Console.ReadLine();
+
+            string listeningPort = args[0];
+            string syncPath = args[1];
+            string destination = args[2];
 
             string[] files = Directory.GetFiles(syncPath, "*.json");
 
@@ -36,8 +54,9 @@ namespace Boxxy
             // TODO - sync stored requests from disk
 
             var store = new ProxyStore(syncPath, requests);
-            var proxy = new HttpProxy(store);
-            proxy.Start("http://localhost:8080/", "http://requestb.in/pa43a9pa");
+            var proxy = new HttpProxy(store, interactive);
+
+            proxy.Start(string.Format("http://localhost:{0}/", listeningPort), destination);
 
             try {
                 new MainScreen(store).Run();

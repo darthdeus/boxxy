@@ -14,7 +14,8 @@ namespace Boxxy.Screens
 
         public void Run() {
             Console.Clear();
-            Console.WriteLine("Type a new header in the format 'Name: Value' and press ENTER to add it, or simply press ENTER without typing anything to cancel.");
+            Console.WriteLine(
+                "Type a new header in the format 'Name: Value' and press ENTER to add it, or simply press ENTER without typing anything to cancel.");
             Console.WriteLine();
 
             var regex = new Regex("^.+:.+$");
@@ -27,11 +28,14 @@ namespace Boxxy.Screens
                     _request.Headers.Add(header);
                     break;
                 } else {
-                    Console.WriteLine("Invalid header, please try again in the 'Name: Value' format.");
-                    Console.WriteLine();
+                    if (line == "") {
+                        break;
+                    } else {
+                        Console.WriteLine("Invalid header, please try again in the 'Name: Value' format.");
+                        Console.WriteLine();
+                    }
                 }
             }
-
         }
     }
 }

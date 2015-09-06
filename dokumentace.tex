@@ -1,0 +1,101 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[czech]{babel}
+
+\title{Debugovací HTTP Proxy}
+\author{Jakub Arnold}
+\date{}
+
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+	Tématem zápočtového programu je implementace debugovací HTTP proxy, která umožnuje transparentně
+	zachytit/upravit nešifrovanou komunikaci protokolu HTTP a zjednodušit tak vývoj síťových aplikací používajícich HTTP.
+\end{abstract}
+
+\section{Kompilace a spuštění}
+
+Pro úspěšnou kompilaci je potřeba .NET framework verze 4.5 a vyšší, a to z důvodu použití funkce async/await \cite{async}, která zjednodušuje práci s asynchroním zpracováním HTTP požadavků.
+
+\section{Rozsah implementace}
+
+Program pracuje v textovém režimu konzole, a je možné jej spustit v jednom ze dvou režimů.
+
+\begin{description}
+	\item[Interaktivní] \hfill \\
+		Všechny HTTP požadavky jsou pozastaveny a uživatel může rozhodnout, zda je přeposlat dál, případně upravit před přeposláním.
+	\item[Neinteraktivní] \hfill \\
+		Všechny HTTP požadavky jsou automaticky přeposlány a program pouze zaznamenává průběh komunikace.
+\end{description}
+
+Zachycené HTTP požadavky jsou automaticky ukládány do textových souborů v pracovním adresáři programu (ve formátu JSON), což umožnuje uživateli kdykoliv program ukončit, a při novém spuštění bude mít všechno ve stejném stavu, jako při původním spuštění. Soubory je také možné jednoduše ručně upravit (pouze pokud je program vypnutý), a změny se projeví při dalším spuštění.
+
+Se zachycenými požadavky jsou možné následující operace
+
+\begin{description}
+	\item[Modifikace hlaviček] \hfill \\
+		Hlavičky HTTP požadavku jsou zpracovávány jednotlivě, což umožnuje uživateli libovolnou z nich změnit/smazat, případně přidat nějaké další.
+	\item[Přeposlání požadavku] \hfill \\
+		Každý uložený (a případně upravený) požadavek je možné (znovu) poslat na cílový server.
+	\item[Úprava těla požadavku] \hfill \\
+		Tělo požadavku je také zpracováno zvlášť, což uživateli umožnuje jej libovolně změnit.
+\end{description}
+
+\section{Struktura programu}
+
+Navigace programu má následující strukturu
+
+\begin{itemize}
+	\item Main menu
+	\begin{itemize}
+		\item Start/stop proxy
+		\item Seznam všech požadavků
+		\begin{itemize}
+			\item Seznam požadavků (možno zobrazit detail)
+			\begin{itemize}
+				\item Seznam hlaviček
+				\item Odpověď serveru (pokud je dostupná)
+				\item Možnost přehrát požadavek
+				\item Úprava hlaviček/těla požadavku
+			\end{itemize}
+			\item Smazat vše
+			\item Obnovit
+		\end{itemize}
+		\item Quit
+	\end{itemize}
+\end{itemize}
+
+Zachycené požadavky (instance třídy \emph{IncomingHttpRequest}) jsou automaticky ukládány na disk a znovu načteny při spuštění programu. Je tedy teoreticky možné zachytit probíhající komunikaci, vypnout program, další den se k němu vrátit a ty samé požadavky znovu ručně přehrát.
+
+Zde je však omezení, že původní požadavek už klientovi zpátky nepříjde, protože po ukončení programu se uzavře spojení.
+
+\section{Implementace a použité knihovny}
+
+Program závisí pouze na knihovnách standardně distribuovaných s platformou .NET, konkrétně jmenný prostor \emph{System.Net}, který obsahuje nizkoúrovňovou implementaci samotného HTTP serveru (konkrétně \emph{System.Net.HttpListener}.) Žádné další závislosti nejsou potřeba.
+
+Samotný program je pak rozdělen do dvou assembly, kde jedna tvoří samotnou logiku HTTP proxy (\emph{Boxxy.Core}), a druhá je uživatelské prostředí v příkazové řádce (\emph{Boxxy.CLI}). Zpracování HTTP požadavků probíhá v odděleném vlákně, a uživatel tedy může program používat, zatímco příchozí požadavky jsou zpracovány na pozadí.
+
+Třída \emph{Boxxy.Core.ProxyStore} poté vše udržuje v paměti, a zároveň při jakékoliv změně synchronizuje uložené požadavky na disk. Uživatel se tedy o ukládání nemusí vůbec starat, všechno probíhá automaticky. Samotné požadavky jsou zapouzdřeny do třídy \emph{Boxxy.Core.IncomingHttpRequest}, která ukládá všchny informace o požadavku, včetně informace zda byl odeslán na cílový server (a tedy zda je dostupná odpověď), a zároveň zda byla konkrétní instance načtena z disku. Tato informace má velký vliv na to, zda je možné původnímu odesilateli přeposlat zpátky odpověď ze serveru, protože pro deserializované objekty už není dostupný původní socket, přes který se klient připojil.
+
+Samotné hlavičky a tělo požadavku jsou také načteny kompletně do instancí \emph{Boxxy.Core.IncomingHttpRequest}, a není tedy možné požadavky streamovat z klienta přímo na server. Následkem je sice potenciálně pomalejší průběh komunikace, což ale programu určenému pro debugování nevadí.
+
+\subsection{Implementace uživatelského rozhranní}
+
+Veškerá komunikace uživatele s programem probíhá pomocí jednoduchého konzolového uživatelského rozhranní, které je strukturálně rozdělěno na několik \emph{obrazovek}, resp. menu mezi kterými se uživatel může pohybovat.
+
+Základní stavební prvek je interface \emph{IScreen}, které všechny třídy reprezentující jednotlivá menu implementují.
+
+Víceúrovňová navigace v menu je poté řešena zanořeným voláním patřičných \emph{IScreen.Run()}, kde v rámci průběhu jedné iterace obrazovky je spuštěna jiná, která kompletně převezme kontrolu, až dokud se uživatel nerozhodne vrátit na původní obrazovku.
+
+Všechny třídy implementující \emph{IScreen} fungují na podobném principu (převzato z principu fungování update/render smyček u grafických programů/her), a to že drží nějaký vnitřní stav který ovlivňuje vykreslení obrazovky, a při jakékoliv interakci s uživatelem se celé menu smaže a překreslí (za pomoci \emph{System.Console.Clear}.)
+
+Tímto způsobem je možné jednoduše docílit rozhranní, které působí velmi interaktivně, a to s použitím \emph{Console.ReadKey()}, který umožní rovnou reagovat na stisknutou klávesu bez nutnosti zmáčknout Enter (na rozdíl od \emph{Console.Read()}, který používá nějaký vnitřní input buffer a vrací hodnotu až po stisku Enteru.) Tímto je možné uživatelské rozhranní překreslit okamžitě když uživatel stiskne klávesu, viz. např. úvodní obrazovka při spuštění proxy.
+
+\begin{thebibliography}{100}
+	\bibitem{async} Asynchronous Programming with Async and Await https://msdn.microsoft.com/en-us/library/hh191443.aspx
+\end{thebibliography}
+
+\end{document}

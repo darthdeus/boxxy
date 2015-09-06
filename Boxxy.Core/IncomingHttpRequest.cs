@@ -20,7 +20,7 @@ namespace Boxxy.Core
 
         public Header(string name, string value) {
             Name = name;
-            Value = value;
+            Value = value;            
         }
     }
 
@@ -82,9 +82,8 @@ namespace Boxxy.Core
         public async Task Play() {
             var serverResponse = await Forward();
 
-            IsSent = true;
-
-            if (!IsDeserialized && _originalClientResponseSocket != null) {
+            if (!IsSent && !IsDeserialized && _originalClientResponseSocket != null) {
+                IsSent = true;
                 await RespondWith(serverResponse);
             } else {                
                 Debug.WriteLine("The request was deserialized from disk, and therefore can't be forwarded back to the client.");
@@ -94,7 +93,6 @@ namespace Boxxy.Core
         private async Task<HttpResponseMessage> Forward() {
             HttpResponseMessage response;
             using (var client = new HttpClient {Timeout = TimeSpan.FromSeconds(10)}) {
-                // TODO - handle POST
                 var requestMethod = ParseHttpMethod(HttpMethod);
                 var message = new HttpRequestMessage(requestMethod, Destination);
 
@@ -110,7 +108,6 @@ namespace Boxxy.Core
 
                 response = await client.SendAsync(message);
             }
-
 
             ResponseHeaders.Clear();
             foreach (var header in response.Headers) {
@@ -131,13 +128,16 @@ namespace Boxxy.Core
             var output = _originalClientResponseSocket.OutputStream;
 
             foreach (var header in ResponseHeaders) {
+                // This is manually skipped since it results in an exception if added as a header.
+                if (WebHeaderCollection.IsRestricted(header.Name) || header.Name == "Keep-Alive") {
+                    continue;
+                }
                 _originalClientResponseSocket.Headers.Add(header.Name, header.Value);
-            }
+            }           
 
             output.Write(buffer, 0, buffer.Length);
             output.Close();
         }
-
 
         private HttpMethod ParseHttpMethod(string httpMethod) {
             switch (httpMethod.ToUpper()) {

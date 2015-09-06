@@ -35,7 +35,7 @@ namespace Boxxy.Screens
                     }
 
                     Console.WriteLine();
-                    int limit = 200;
+                    const int limit = 200;
                     if (request.ResponseBody.Length > limit) {
                         Console.WriteLine(request.ResponseBody.Substring(0, limit));
                     } else {
@@ -61,7 +61,7 @@ namespace Boxxy.Screens
                     } else if (input == "b") {
                         break;
                     } else if (input == "d") {
-                        _store.Requests.RemoveAt(_index);
+                        _store.RemoveRequestAt(_index);
                         break;
                     } else if (input == "m") {
                         new ChangeMethodScreen(request).Run();
@@ -72,16 +72,22 @@ namespace Boxxy.Screens
 
                         Console.Clear();
                         Console.WriteLine("Replaying the request, {0}s timeout", timeout);
-                        bool ok = request.Play().Wait(TimeSpan.FromSeconds(20));
+                        try {
+                            bool ok = request.Play().Wait(TimeSpan.FromSeconds(20));
 
-                        if (ok) {
-                            new ResponseDetailScreen(request).Run();
-                            // After the request has been replayed, we don't want to stick around on this screen anymore,
-                            // as the user will most likely want to replay another request right after that.
-                            break;
-                        } else {
-                            Console.WriteLine();
-                            Console.WriteLine("Request replay failed.");
+                            if (ok) {
+                                new ResponseDetailScreen(request).Run();
+                                // After the request has been replayed, we don't want to stick around on this screen anymore,
+                                // as the user will most likely want to replay another request right after that.
+                                break;
+                            } else {
+                                Console.WriteLine();
+                                Console.WriteLine("Request replay failed, press ENTER to continue.");
+                            }
+                        } catch (AggregateException e) {
+                            Console.WriteLine("There was an error processing the request, press ENTER to continue.");
+                            Console.WriteLine(e);
+                            Console.ReadLine();
                         }
                     } else if (new Regex("^\\d+$").IsMatch(input)) {
                         int index = int.Parse(input) - 1;

@@ -1,8 +1,5 @@
 ﻿using System;
-using System.IO;
 using System.Net;
-using System.Net.Http;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -16,9 +13,11 @@ namespace Boxxy.Core
         private HttpListener _listener;
         private CancellationTokenSource _currentTcs;
         private readonly ProxyStore _proxyStore;
+        private readonly bool _interactive;
 
-        public HttpProxy(ProxyStore proxyStore) {
+        public HttpProxy(ProxyStore proxyStore, bool interactive) {
             _proxyStore = proxyStore;
+            _interactive = interactive;
         }
 
         public void Start(string prefixUrl, string destination)
@@ -49,17 +48,18 @@ namespace Boxxy.Core
                 // and based on the MSDN docs.
                 Console.WriteLine("Server killed.");
             }
-            
         }
 
         private async Task HandleRequest(HttpListenerContext context) {
             var incomingRequest = new IncomingHttpRequest(context, _destination);
             _proxyStore.Requests.Add(incomingRequest);
             OnRequest(incomingRequest);
+
+            if (!_interactive) {
+                await incomingRequest.Play();
+            }
         }
-
-
-
+        
         public void Stop() {
             _listener.Stop();
         }

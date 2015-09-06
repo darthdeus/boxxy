@@ -12,7 +12,10 @@ namespace Boxxy.Screens
         }
 
         public void Run() {
-            // TODO - display the response details
+            Console.WriteLine("Response BODY");
+            Console.WriteLine();
+            Console.WriteLine(_request.ResponseBody);
+            Console.WriteLine();
 
             Console.WriteLine("Press ENTER to continue.");
             Console.ReadLine();
